@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -77,9 +78,9 @@ public class Overview extends Fragment {
         rootView = inflater.inflate(R.layout.fragment_overview, container, false);
         listview = (ListView)rootView.findViewById(R.id.overview_listview);
 
-        String[] fruits = new String[] {};
+        String[] emtpy = new String[] {};
 
-        mItems = new ArrayList<String>(Arrays.asList(fruits));
+        mItems = new ArrayList<String>(Arrays.asList(emtpy));
 
         adapter = new ArrayAdapter<String>(getActivity().getBaseContext(), android.R.layout.simple_list_item_1, android.R.id.text1, mItems);
 
@@ -87,18 +88,29 @@ public class Overview extends Fragment {
 
         adapter.notifyDataSetChanged();
 
+        //Toast.makeText(this.getContext(), "Overview loaded", Toast.LENGTH_LONG).show();
+
         return rootView;
     }
 
+
     public void AddItem(String s)
     {
-        mItems.add(s);
+        this.mItems.add(s);
+    }
+
+
+
+    public void Update()
+    {
         adapter.notifyDataSetChanged();
     }
 
     public void ClearItems()
     {
         mItems.clear();
-        adapter.notifyDataSetChanged();
+        this.Update();
     }
+
+
 }

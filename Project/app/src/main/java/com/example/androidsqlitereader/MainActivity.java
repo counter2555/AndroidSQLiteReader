@@ -37,6 +37,8 @@ public class MainActivity extends AppCompatActivity {
     private FloatingActionButton add_button;
 
     private Overview OverviewFragment;
+    private DataFragment DetailFragment;
+
 
     private SQLiteDatabase current_db = null;
 
@@ -60,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
 
         //initialize UI elemens
         OverviewFragment = (Overview)sectionsPagerAdapter.GetFragment(0);
+        DetailFragment = (DataFragment)sectionsPagerAdapter.GetFragment(1);
 
         add_button = (FloatingActionButton)findViewById(R.id.opendb);
         add_button.setOnClickListener(new View.OnClickListener() {
@@ -81,8 +84,9 @@ public class MainActivity extends AppCompatActivity {
         {
             Uri selectedfile = data.getData();
             String filename = GetFileNameFromUri(selectedfile);
-            this.database_name_label.setText(selectedfile.getPath());
-            //this.OpenDB(selectedfile);
+            this.database_name_label.setText(GetPath(selectedfile));
+            this.OpenDB(selectedfile);
+            this.UpdateTables();
         }
     }
 
@@ -96,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
     private static String GetPath(Uri url)
     {
         File file = new File(url.getPath());
-        return  file.getPath();
+        return  file.getAbsolutePath().replaceAll("/document/raw:", "");
     }
 
     private void OpenFileDialog()
@@ -108,24 +112,46 @@ public class MainActivity extends AppCompatActivity {
     private void OpenDB(Uri dbfile)
     {
         this.current_db = SQLiteDatabase.openDatabase(GetPath(dbfile), null, SQLiteDatabase.OPEN_READONLY);
+        this.DetailFragment.SetDatabase(this.current_db);
     }
 
     private void UpdateTables()
     {
         if(!Objects.isNull(current_db)) {
             this.OverviewFragment.ClearItems();
-            Cursor c = current_db.rawQuery("SELECT name FROM sqlite_master WHERE type='table'", null);
+            this.DetailFragment.Clear();
 
+            Cursor c = current_db.rawQuery("SELECT name FROM sqlite_master WHERE type='table'", null);
+            int i = 0;
             if(c.moveToFirst())
             {
                 while (!c.isAfterLast())
                 {
                     String name = c.getString(0);
                     this.OverviewFragment.AddItem(name);
+                    this.DetailFragment.AddItem(name);
+                    c.moveToNext();
                 }
+
             }
+
+            this.OverviewFragment.Update();
+            this.DetailFragment.Update();
         }
 
+    }
+
+    private  void CloseDatabase()
+    {
+        this.DetailFragment.CloseDatabase();
+        this.current_db.close();
+    }
+
+    @Override
+    public  void onDestroy()
+    {
+        super.onDestroy();
+        this.CloseDatabase();
     }
 
 

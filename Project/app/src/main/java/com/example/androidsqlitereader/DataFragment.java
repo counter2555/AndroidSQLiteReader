@@ -1,5 +1,6 @@
 package com.example.androidsqlitereader;
 
+import android.database.Cursor;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -7,6 +8,15 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import android.database.sqlite.SQLiteDatabase;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -20,9 +30,21 @@ public class DataFragment extends Fragment {
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
 
+    private SQLiteDatabase database;
+
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+
+    private static String NoneString = "------";
+
+    private ArrayAdapter<String> adapter;
+    private ArrayList<String> mItems;
+    private Spinner dropdown;
+
+    private TextView detailTextView;
+
+    private View rootView;
 
     public DataFragment() {
         // Required empty public constructor
@@ -59,6 +81,95 @@ public class DataFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_data, container, false);
+        rootView = inflater.inflate(R.layout.fragment_data, container, false);
+        this.dropdown = (Spinner)rootView.findViewById(R.id.table_dropdown);
+        this.detailTextView = (TextView)rootView.findViewById(R.id.detail_text);
+
+        this.dropdown.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                LoadDetails((String)dropdown.getSelectedItem());
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
+        String[] emtpy = new String[] {};
+
+        mItems = new ArrayList<String>(Arrays.asList(emtpy));
+
+        adapter = new ArrayAdapter<String>(getActivity().getBaseContext(), android.R.layout.simple_list_item_1, android.R.id.text1, mItems);
+
+        this.dropdown.setAdapter(adapter);
+
+        adapter.notifyDataSetChanged();
+
+        return rootView;
+
+    }
+
+
+
+    public void AddItem(String name)
+    {
+        this.mItems.add(name);
+    }
+    public void Update()
+    {
+        adapter.notifyDataSetChanged();
+    }
+
+    public void Clear()
+    {
+        mItems.clear();
+        this.AddItem(NoneString);
+        this.Update();
+        this.detailTextView.setText("");
+    }
+
+    public void LoadDetails(String table)
+    {
+        if(!table.equals(NoneString)) {
+            String txt = "";
+            //get Entry numbers
+            Cursor c = this.database.rawQuery("SELECT COUNT(*) FROM "+table, null);
+
+            if(c.moveToFirst())
+            {
+                int count = c.getInt(0);
+                txt += "Entries: "+String.valueOf(count)+"\n\n";
+            }
+
+            //get column names
+            c = this.database.query(table, null, null, null, null, null, null);
+            String[] columns = c.getColumnNames();
+
+            txt += "Columns:\n";
+
+            for(String s: columns)
+
+            {
+                txt += " " + s + "\n";
+            }
+
+            this.detailTextView.setText(txt);
+
+
+        }
+        else
+            this.detailTextView.setText("");
+    }
+
+    public void SetDatabase(SQLiteDatabase db)
+    {
+        this.database = db;
+    }
+
+    public  void CloseDatabase()
+    {
+        this.database.close();
     }
 }
